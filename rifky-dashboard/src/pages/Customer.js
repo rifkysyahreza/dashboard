@@ -1,6 +1,5 @@
 import { faker } from "@faker-js/faker/locale/id_ID";
-import { useState } from "react";
-import { Button, useDisclosure } from "@chakra-ui/react";
+import { useState, useEffect } from "react";
 import {
   Table,
   Thead,
@@ -22,21 +21,31 @@ import {
   FormErrorMessage,
   FormHelperText,
   Input,
+  IconButton,
+  Button,
+  useDisclosure,
 } from "@chakra-ui/react";
+import { DeleteIcon } from "@chakra-ui/icons";
+import { supabase } from "../supabaseClient";
+import { elements } from "chart.js";
 
 function Customer() {
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const [customer, setCustomer] = useState([
-    {
-      no: 1,
-      name: faker.name.fullName(),
-      address: faker.address.cityName(),
-      noHp: faker.phone.number("+62 8### #### ####"),
-    },
-  ]);
+  const addCustomerModal = useDisclosure();
+  const deleteCustomerModal = useDisclosure();
+  const [customers, setCustomer] = useState([]);
   const [inputName, setInputName] = useState("");
   const [inputAddress, setInputAddress] = useState("");
   const [inputNoHp, setInputNoHp] = useState("");
+  const [deleteCustomer, setDeleteCustomer] = useState({});
+
+  useEffect(() => {
+    (async function readCustomer() {
+      let { data: customer, error } = await supabase
+        .from("customer")
+        .select("*");
+      setCustomer(customer);
+    })();
+  }, [customers]);
 
   // const objectCustomer = {
   //   no: 1,
@@ -45,15 +54,40 @@ function Customer() {
   //   noHp: faker.phone.number("+62 8### #### ####"),
   // };
 
-  const addCustomer = () => {
-    let objectCustomer = {
-      no: customer.length === 0 ? 1 : customer[customer.length - 1].no + 1,
+  async function addCustomer() {
+    const { data, error } = await supabase.from("customer").insert([
+      {
+        id: customers.length === 0 ? 1 : customers[customers.length - 1].id + 1,
+        name: inputName,
+        address: inputAddress,
+        phone: inputNoHp,
+      },
+    ]);
+
+    const temp = {
+      id: customers.length === 0 ? 1 : customers[customers.length - 1].id + 1,
       name: inputName,
       address: inputAddress,
-      noHp: inputNoHp,
+      phone: inputNoHp,
     };
-    setCustomer([...customer, objectCustomer]);
-  };
+
+    // let objectCustomer = {
+    //   id: customers.length === 0 ? 1 : customers[customers.length - 1].id + 1,
+    //   name: inputName,
+    //   address: inputAddress,
+    //   phone: inputNoHp,
+    // };
+    setCustomer([...customers, temp]);
+    console.log(customers);
+  }
+
+  async function deleteCustomerFunction() {
+    const { data, error } = await supabase
+      .from("customer")
+      .delete()
+      .eq("id", deleteCustomer.id);
+    console.log(deleteCustomer);
+  }
 
   const resetInput = () => {
     const idName = document.getElementById("inputNameField");
@@ -71,7 +105,7 @@ function Customer() {
     <div>
       <div className="flex flex-row justify-between items-center pb-10">
         <h1 className="text-5xl">Customer</h1>
-        <Button onClick={onOpen}>Add Customer</Button>
+        <Button onClick={addCustomerModal.onOpen}>Add Customer</Button>
       </div>
 
       <div className="w-full">
@@ -84,16 +118,28 @@ function Customer() {
                 <Th>Name</Th>
                 <Th>Address</Th>
                 <Th>No Hp</Th>
+                <Th>Action</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {customer ? (
-                customer.map((elements, index) => (
+              {customers ? (
+                customers.map((elements, index) => (
                   <Tr key={index}>
-                    <Td>{elements.no}</Td>
-                    <Td>{elements.name}</Td>
-                    <Td>{elements.address}</Td>
-                    <Td>{elements.noHp}</Td>
+                    <Td>{index + 1 || []}</Td>
+                    <Td>{elements["name"] || []}</Td>
+                    <Td>{elements["address"] || []}</Td>
+                    <Td>{elements["phone"] || []}</Td>
+                    <Td>
+                      <IconButton
+                        colorScheme="red"
+                        aria-label="Search database"
+                        icon={<DeleteIcon />}
+                        onClick={() => {
+                          deleteCustomerModal.onOpen();
+                          setDeleteCustomer(elements);
+                        }}
+                      />
+                    </Td>
                   </Tr>
                 ))
               ) : (
@@ -104,7 +150,10 @@ function Customer() {
         </TableContainer>
       </div>
 
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal
+        isOpen={addCustomerModal.isOpen}
+        onClose={addCustomerModal.onClose}
+      >
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Add Customer Data</ModalHeader>
@@ -148,7 +197,7 @@ function Customer() {
               mr={3}
               onClick={() => {
                 addCustomer();
-                onClose();
+                addCustomerModal.onClose();
               }}
             >
               Submit
@@ -160,6 +209,36 @@ function Customer() {
               }}
             >
               Reset
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal
+        isOpen={deleteCustomerModal.isOpen}
+        onClose={deleteCustomerModal.onClose}
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Hapus Data</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <h1 className="font-bold">Yakin ingin menghapus data?</h1>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button
+              colorScheme="red"
+              mr={3}
+              onClick={() => {
+                deleteCustomerModal.onClose();
+                deleteCustomerFunction();
+              }}
+            >
+              Delete
+            </Button>
+            <Button colorScheme="blue" variant="ghost">
+              Cancel
             </Button>
           </ModalFooter>
         </ModalContent>
