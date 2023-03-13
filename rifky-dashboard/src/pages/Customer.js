@@ -37,6 +37,7 @@ function Customer() {
   const [inputAddress, setInputAddress] = useState("");
   const [inputNoHp, setInputNoHp] = useState("");
   const [deleteCustomer, setDeleteCustomer] = useState({});
+  const [status, setStatus] = useState(true);
 
   useEffect(() => {
     (async function readCustomer() {
@@ -45,7 +46,8 @@ function Customer() {
         .select("*");
       setCustomer(customer);
     })();
-  }, [customers]);
+    console.log("cek customer");
+  }, [status]);
 
   // const objectCustomer = {
   //   no: 1,
@@ -78,6 +80,7 @@ function Customer() {
     //   phone: inputNoHp,
     // };
     setCustomer([...customers, temp]);
+    setStatus(!status);
     console.log(customers);
   }
 
@@ -87,6 +90,7 @@ function Customer() {
       .delete()
       .eq("id", deleteCustomer.id);
     console.log(deleteCustomer);
+    setStatus(!status);
   }
 
   const resetInput = () => {
@@ -125,7 +129,7 @@ function Customer() {
               {customers ? (
                 customers.map((elements, index) => (
                   <Tr key={index}>
-                    <Td>{index + 1 || []}</Td>
+                    <Td>{elements.id || []}</Td>
                     <Td>{elements["name"] || []}</Td>
                     <Td>{elements["address"] || []}</Td>
                     <Td>{elements["phone"] || []}</Td>

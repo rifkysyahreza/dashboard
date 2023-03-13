@@ -33,6 +33,7 @@ function Inventory() {
   const [inputProductTotal, setInputProductTotal] = useState("");
   const [inputProductPrice, setInputProductPrice] = useState("");
   const [deleteEditProduct, setDeleteEditProduct] = useState({});
+  const [status, setStatus] = useState(true);
 
   useEffect(() => {
     (async function readInventory() {
@@ -42,7 +43,8 @@ function Inventory() {
 
       setInventory(inventory);
     })();
-  }, [inventorys]);
+    console.log("cek inventory");
+  }, [status]);
 
   async function addProduct() {
     const { data, error } = await supabase.from("inventory").insert([
@@ -65,6 +67,7 @@ function Inventory() {
       price: inputProductPrice,
     };
     setInventory([...inventorys, temp]);
+    setStatus(!status);
   }
 
   async function deleteProductFunction() {
@@ -73,6 +76,7 @@ function Inventory() {
       .delete()
       .eq("id", deleteEditProduct.id);
     console.log(deleteEditProduct);
+    setStatus(!status);
   }
 
   async function editProductFunction() {
@@ -84,6 +88,7 @@ function Inventory() {
         price: inputProductPrice,
       })
       .eq("id", deleteEditProduct.id);
+    setStatus(!status);
   }
 
   const resetInput = () => {
